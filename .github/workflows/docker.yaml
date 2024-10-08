@@ -32,7 +32,7 @@ jobs:
       - name: Set Docker tag
         run: |
           COMMIT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
-          DOCKER_TAG=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/huggingface/test/cuda-container:$COMMIT_SHA
+          DOCKER_TAG=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/huggingface/cuda_environment:$COMMIT_SHA
           echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
 
       # Build the Docker image
