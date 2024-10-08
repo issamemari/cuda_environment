@@ -28,31 +28,19 @@ jobs:
         run: |
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
+      # Set Docker tag (without storing COMMIT_SHA in GitHub environment)
+      - name: Set Docker tag
+        run: |
+          COMMIT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          DOCKER_TAG=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/huggingface/test/cuda-container:$COMMIT_SHA
+          echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
+
       # Build the Docker image
       - name: Build Docker image
         run: |
-          COMMIT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
-          docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/huggingface/test/cuda-container:${{ env.COMMIT_SHA }} .
-
-      - name: Tag Docker image with commit sha and branch name
-        run: |
-          COMMIT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
-          BRANCH_NAME=$(echo "${{ github.ref }}" | sed 's|refs/heads/||')
-
-          echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_ENV
-          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
-
-      - name: Tag Docker image with branch name
-        if: startsWith(github.ref, 'refs/heads/')
-        run: |
-          docker tag llm-cuda-container:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/llm-cuda-container:${{ env.BRANCH_NAME }}
+          docker build -t ${{ env.DOCKER_TAG }} .
 
       # Push Docker image with commit hash
-      - name: Push Docker image with commit hash
+      - name: Push Docker image
         run: |
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/llm-cuda-container:${{ env.COMMIT_SHA }}
-
-      # Push the Docker image to ECR
-      - name: Push Docker image to ECR
-        run: |
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/llm-cuda-container:latest
+          docker push ${{ env.DOCKER_TAG }}
