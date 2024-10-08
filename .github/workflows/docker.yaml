@@ -11,11 +11,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the repository code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Set up AWS CLI
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -23,24 +21,20 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # Log in to Amazon ECR
       - name: Login to Amazon ECR
         run: |
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
-      # Set Docker tag (without storing COMMIT_SHA in GitHub environment)
       - name: Set Docker tag
         run: |
           COMMIT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
           DOCKER_TAG=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/huggingface/cuda_environment:$COMMIT_SHA
           echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
 
-      # Build the Docker image
       - name: Build Docker image
         run: |
           docker build -t ${{ env.DOCKER_TAG }} .
 
-      # Push Docker image with commit hash
       - name: Push Docker image
         run: |
           docker push ${{ env.DOCKER_TAG }}
