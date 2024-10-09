@@ -1,20 +1,40 @@
-# Dockerized CUDA environment for training Transformers
+# Dockerized CUDA Environment for Training Transformers
 
-This repository provides a Docker container that sets up an environment supporting CUDA for GPU acceleration and the Hugging Face Transformers library for training LLMs.
+This repository provides a Docker container for setting up a CUDA-enabled environment that supports GPU acceleration and the Hugging Face Transformers library, specifically for training large language models (LLMs).
 
-## Testing the image
+## How to Test the Docker Image
 
-The image is currently hosted on a public container registry (ECR from AWS), you can pull it and run it as follows:
+The pre-built Docker image is hosted on AWS ECR. To pull and run the image, follow these steps:
 
-Pull the image
+### Pull the image
 ```
 docker pull public.ecr.aws/n4t8b6w0/huggingface/cuda_environment:latest
 ```
 
-Run the demo script
+### Run the Demo Script
+
+To verify that CUDA is properly set up, run the following command:
 
 ```
 docker run --rm public.ecr.aws/n4t8b6w0/huggingface/cuda_environment python /app/src/demo.py
 ```
 
-If you are on a machine that has a CUDA-capable GPU, this should print something like `CUDA available: True`, otherwise it should output `CUDA available: False`
+If the machine has a CUDA-capable GPU, the output should read: `CUDA available: True`. If not, it will output: `CUDA available: False`.
+
+### Build the Image Locally
+
+You can also build the image from the Dockerfile in the repository with:
+
+```
+docker build -t cuda_environment .
+```
+
+Then you can similarly run it with:
+
+```
+docker run --rm cuda_environment python /app/src/demo.py
+```
+
+## Continuous Integration (CI)
+
+This repository is set up with a GitHub Actions workflow that automatically builds and publishes the Docker image with every push. Each image is tagged with both the commit SHA and the latest tag for easy reference.
