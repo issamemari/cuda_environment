@@ -21,20 +21,26 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Login to Amazon ECR
-        run: |
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-
-      - name: Set Docker tag
+      - name: Set environment variables
         run: |
           COMMIT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
-          DOCKER_TAG=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/huggingface/cuda_environment:$COMMIT_SHA
-          echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
+          echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_ENV
+
+          ECR_REGISTRY=public.ecr.aws/n4t8b6w0
+          echo "ECR_REGISTRY=$ECR_REGISTRY" >> $GITHUB_ENV
+
+          ECR_IMAGE_NAME=huggingface/cuda_environment
+          echo "ECR_IMAGE_NAME=$ECR_IMAGE_NAME" >> $GITHUB_ENV
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr-public get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
 
       - name: Build Docker image
         run: |
-          docker build -t ${{ env.DOCKER_TAG }} .
+          docker build -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_IMAGE_NAME }}:${{ env.COMMIT_SHA }} -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_IMAGE_NAME }}:latest .
 
       - name: Push Docker image
         run: |
-          docker push ${{ env.DOCKER_TAG }}
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_IMAGE_NAME }}:${{ env.COMMIT_SHA }}
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_IMAGE_NAME }}:latest
